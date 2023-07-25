@@ -81,6 +81,6 @@ if __name__ == "__main__" :
     reset()
     initialization()
     schedule.every(pingInterval).minutes.do(job)
-    schedule.day.at(mailTime).do(sendReport)
+    schedule.every().day.at(mailTime).do(sendReport)
     while (True) :
         schedule.run_pending()
