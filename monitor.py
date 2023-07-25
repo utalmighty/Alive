@@ -30,6 +30,7 @@ def initialization() :
         name_and_urls.append((services[i].strip(), urls[i].strip()))
     for i in range(len(admins)) :
         admins[i] = admins[i].strip()
+    print(admins, name_and_urls)
 
 
 def job() :
