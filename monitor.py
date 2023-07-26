@@ -24,4 +24,4 @@ def hello():
 if __name__ == "__main__":
     schedule.every(obj.interval).minutes.do(obj.job)
     schedule.every().day.at(obj.day_time).do(obj.send_report)
-    app.run(port=8084)
+    app.run(host='0.0.0.0', port=8084)
