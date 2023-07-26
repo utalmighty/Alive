@@ -87,5 +87,5 @@ if __name__ == "__main__":
     obj = Job()
     schedule.every(obj.interval).minutes.do(obj.job)
     schedule.every().day.at(obj.day_time).do(obj.send_report)
-    app.run(port=8080)
+    app.run(port=8084)
 
