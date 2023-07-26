@@ -3,83 +3,76 @@ import smtplib
 import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
 import requests
 import schedule
 
-pings = 0
-name_and_urls = []
-status = []  # (sum_of_pings, failed_pings)
-admins = []
+class Job:
+    ''' Job class '''
 
+    def __init__(self) -> None:
+        self.pings = 0
+        self.status = []
+        self.interval = int(os.environ['PING_INTERVAL_IN_MINUTES'])
+        self.day_time = os.environ['EMAIL_TIME']
+        self.email = os.environ['EMAIL']
+        self.password = os.environ['EMAIL_PASSWORD']
+        self.admins = [admin.strip()
+                       for admin in os.environ['ADMINS_EMAILS'].split(",")]
+        services = os.environ['SERVICES'].split(",")
+        urls = os.environ['SERVICES_URLS'].split(",")
+        self.name_and_urls = [(service.strip(), urls[i].strip())
+                              for i, service in enumerate(services)]
+        self.reset_pings()
 
-def initialization():
-    ''' Read environment varibles '''
-    global name_and_urls
-    global admins
-    services = os.environ['SERVICES'].split(",")
-    urls = os.environ['SERVICES_URLS'].split(",")
-    name_and_urls = []
-    for i, service in enumerate(services):
-        name_and_urls.append((service.strip(), urls[i].strip()))
-    admins = [admin.strip() for admin in os.environ['ADMINS_EMAILS'].split(",")]
-    reset()
+    def reset_pings(self):
+        ''' Resets the value of pings and status '''
+        self.pings = 0
+        self.status = []
+        self.status = [[0, 0] for i in range(len(self.name_and_urls))]
 
+    def job(self):
+        ''' Periodic request Job '''
+        self.pings += 1
+        for i, item in enumerate(self.name_and_urls):
+            start_time = time.time()
+            resp = requests.get(item[1])  # No timeout
+            if resp.status_code == 200 :
+                self.status[i][0] += int((time.time()-start_time)*1000)
+            else:
+                # Increase failure count
+                self.status[i][1] += 1
 
-def job():
-    ''' Periodic request Job '''
-    global pings
-    global status
-    pings += 1
-    for i, item in enumerate(name_and_urls):
-        start_time = time.time()
-        resp = requests.get(item[1]) # No timeout
-        if (resp.status_code == 200):
-            status[i][0] += int((time.time()-start_time)*1000)
-        else:
-            # Increase failure count
-            status[i][1] += 1
-
-
-def send_report():
-    ''' Email Report '''
-    report = "Total Pings: " + str(pings) + "\n"
-    for i, item in enumerate(name_and_urls):
-        denominator = pings-status[i][1]
-        average_ping = "Service unavailable!"
-        if denominator > 0:
-            average_ping = str(status[i][0]/denominator)+" ms"
-        report += "👉" + item[0] + " 🟢Average Ping Latency: " + \
-            average_ping + " 🔴Failed Pings: " + str(status[i][1]) + "\n"
-    local_time = time.localtime()
-    subject = "Report: " + str(local_time.tm_mday) + "-" + \
-        str(local_time.tm_mon) + "-" + str(local_time.tm_year)
-    smtp = smtplib.SMTP('smtp.gmail.com', 587)
-    smtp.ehlo()
-    smtp.starttls()
-    smtp.login(user=os.environ['EMAIL'], password=os.environ['EMAIL_PASSWORD'])
-    msg = MIMEMultipart()
-    msg['Subject'] = subject
-    msg.attach(MIMEText(report))
-    smtp.sendmail(from_addr='Well Wishers Admin',
-                  to_addrs=admins, msg=msg.as_string())
-    smtp.quit()
-    reset()
-
-
-def reset():
-    '''Reset all the values to default'''
-    global pings
-    global status
-    pings = 0
-    status = []
-    for i in range(len(name_and_urls)):
-        status.append([0, 0])
+    def send_report(self):
+        ''' Email Report '''
+        report = "Total Pings: " + str(self.pings) + "\n"
+        for i, item in enumerate(self.name_and_urls):
+            denominator = self.pings-self.status[i][1]
+            average_ping = "Service unavailable!"
+            if denominator > 0:
+                average_ping = str(self.status[i][0]/denominator)+" ms"
+            report += "👉" + item[0] + " 🟢Average Ping Latency: " + \
+                average_ping + " 🔴Failed Pings: " + \
+                str(self.status[i][1]) + "\n"
+        local_time = time.localtime()
+        subject = "Report: " + str(local_time.tm_mday) + "-" + \
+            str(local_time.tm_mon) + "-" + str(local_time.tm_year)
+        smtp = smtplib.SMTP('smtp.gmail.com', 587)
+        smtp.ehlo()
+        smtp.starttls()
+        smtp.login(user=os.environ['EMAIL'],
+                   password=os.environ['EMAIL_PASSWORD'])
+        msg = MIMEMultipart()
+        msg['Subject'] = subject
+        msg.attach(MIMEText(report))
+        smtp.sendmail(from_addr='Well Wishers Admin',
+                      to_addrs=self.admins, msg=msg.as_string())
+        smtp.quit()
+        self.reset_pings()
 
 
 if __name__ == "__main__":
-    initialization()
-    schedule.every(int(os.environ['PING_INTERVAL_IN_MINUTES'])).minutes.do(job)
-    schedule.every().day.at(os.environ['EMAIL_TIME']).do(send_report)
+    obj = Job()
+    schedule.every(obj.interval).minutes.do(obj.job)
+    schedule.every().day.at(obj.day_time).do(obj.send_report)
     while True:
         schedule.run_pending()
