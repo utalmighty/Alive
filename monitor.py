@@ -59,8 +59,8 @@ class Job:
         smtp = smtplib.SMTP('smtp.gmail.com', 587)
         smtp.ehlo()
         smtp.starttls()
-        smtp.login(user=os.environ['EMAIL'],
-                   password=os.environ['EMAIL_PASSWORD'])
+        smtp.login(user=self.email,
+                   password=self.password)
         msg = MIMEMultipart()
         msg['Subject'] = subject
         msg.attach(MIMEText(report))
