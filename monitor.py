@@ -8,11 +8,17 @@ import schedule
 from flask import Flask 
 
 app = Flask(__name__)
+is_running = False
 
 @app.route("/start")
 def start():
-    while True: 
-        schedule.run_pending()
+    global is_running
+    if not is_running :
+        is_running = True
+        while True: 
+            schedule.run_pending()
+    return "Already Running"
+    
 
 @app.route("/")
 def hello():
