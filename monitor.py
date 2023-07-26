@@ -5,6 +5,19 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import requests
 import schedule
+from flask import Flask 
+
+app = Flask(__name__)
+
+@app.route("/start")
+def start():
+    while True: 
+        schedule.run_pending()
+
+@app.route("/")
+def hello():
+    sys_time = time.localtime()
+    return "Hello from Alive!! System Time: "+ str(sys_time.tm_hour) + ":" + str(sys_time.tm_min)
 
 class Job:
     ''' Job class '''
@@ -74,5 +87,5 @@ if __name__ == "__main__":
     obj = Job()
     schedule.every(obj.interval).minutes.do(obj.job)
     schedule.every().day.at(obj.day_time).do(obj.send_report)
-    while True:
-        schedule.run_pending()
+    app.run(port=8080)
+
