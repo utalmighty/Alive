@@ -7,5 +7,5 @@
 - PING_INTERVAL_IN_MINUTES ```Interval in minutes```
 - EMAIL_TIME ```Time of day at which mail should be sent```
 - ONE_TIME_TIMING ```Time of day at which one time job should run```
-ONE_TIME_SERVICES ```One time services name seperated by comma.```
-ONE_TIME_SERVICES_URLS ```One time services urls seperated by comma.```
+- ONE_TIME_SERVICES ```One time services name seperated by comma.```
+- ONE_TIME_SERVICES_URLS ```One time services urls seperated by comma.```
