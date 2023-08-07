@@ -18,7 +18,6 @@ def start():
             schedule.run_pending()
     return "Already Running!"
 
-
 @app.route("/stop")
 def stop():
     ''' Stop Monitoring if running '''
@@ -36,6 +35,7 @@ def hello():
 
 
 if __name__ == "__main__":
-    schedule.every(obj.interval).minutes.do(obj.job)
+    schedule.every(obj.interval).minutes.do(obj.recurring_job)
+    schedule.every().day.at(obj.one_time_job_time).do(obj.one_time_job)
     schedule.every().day.at(obj.day_time).do(obj.send_report)
     app.run(host='0.0.0.0', port=8084)
